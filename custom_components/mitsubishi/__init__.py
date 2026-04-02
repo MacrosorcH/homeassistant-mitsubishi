@@ -121,7 +121,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return True
 
     except Exception as ex:
-        _LOGGER.exception("Failed to set up Mitsubishi Air Conditioner: %s", ex)
+        _LOGGER.exception("[%s] Failed to set up Mitsubishi Air Conditioner: %s",
+                          entry.title,
+                          ex)
         raise ConfigEntryNotReady from ex
 
 
@@ -139,14 +141,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # This prevents the AC from being stuck with stale remote temperature data
         if coordinator.remote_temp_mode:
             try:
-                _LOGGER.info("Switching AC to internal temperature sensor during unload")
+                _LOGGER.info("[%s] Switching AC to internal temperature sensor during unload",
+                             entry.title)
                 await hass.async_add_executor_job(
                     coordinator.controller.set_current_temperature, None
                 )
             except Exception:
                 _LOGGER.warning(
-                    "Failed to switch AC to internal sensor during unload, "
-                    "AC may continue using last remote temperature"
+                    "[%s] Failed to switch AC to internal sensor during unload, "
+                    "AC may continue using last remote temperature",
+                    entry.title,
                 )
 
         # Close API connection
@@ -158,7 +162,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Migrate old entry."""
     _LOGGER.debug(
-        "Migrating configuration from version %s.%s",
+        "[%s] Migrating configuration from version %s.%s",
+        config_entry.title,
         config_entry.version,
     )
 

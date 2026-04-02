@@ -78,31 +78,31 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
             bool: True if command was successful, False otherwise
         """
         try:
-            _LOGGER.debug(f"Executing command: {command_name}")
+            _LOGGER.debug(f"[{self._config_entry.title}] Executing command: {command_name}")
 
             # Execute the command
             success = await self.hass.async_add_executor_job(lambda: command_func(*args, **kwargs))
 
             if success:
-                _LOGGER.debug(f"Command '{command_name}' sent successfully")
+                _LOGGER.debug(f"[{self._config_entry.title}] Command '{command_name}' sent successfully")
 
                 # Based on timing tests, the device needs ~1.5-2 seconds to process
                 # commands and reflect changes in its status. The command response
                 # contains the OLD state, not the new state.
 
                 # Wait for the device to process the command
-                _LOGGER.debug(f"Waiting for device to process {command_name}...")
+                _LOGGER.debug(f"[{self._config_entry.title}] Waiting for device to process {command_name}...")
                 await asyncio.sleep(self.coordinator.controller.wait_time_after_command)
 
                 # Now fetch fresh data from the device
                 await self.coordinator.async_request_refresh()
-                _LOGGER.debug(f"Coordinator refreshed after {command_name}")
+                _LOGGER.debug(f"[{self._config_entry.title}] Coordinator refreshed after {command_name}")
 
                 return True
             else:
-                _LOGGER.warning(f"Failed to execute {command_name}")
+                _LOGGER.warning(f"[{self._config_entry.title}] Failed to execute {command_name}")
                 return False
 
         except Exception as e:
-            _LOGGER.error(f"Error executing {command_name}: {e}")
+            _LOGGER.error(f"[{self._config_entry.title}] Error executing {command_name}: {e}")
             return False

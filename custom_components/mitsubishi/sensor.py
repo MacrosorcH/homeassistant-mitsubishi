@@ -30,7 +30,8 @@ async def async_setup_entry(
     """Set up Mitsubishi sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     _LOGGER.debug(
-        "Setting up Mitsubishi sensors with coordinator data available: %s",
+        "[%s] Setting up Mitsubishi sensors with coordinator data available: %s",
+        config_entry.title,
         coordinator.data is not None,
     )
 

@@ -48,7 +48,8 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
 
         # Log the loaded state for debugging persistence issues
         _LOGGER.info(
-            "Coordinator initialized: remote_temp_mode=%s (from options: %s)",
+            "Coordinator for `%s` initialized: remote_temp_mode=%s (from options: %s)",
+            self.config_entry.title,
             self._remote_temp_mode,
             dict(config_entry.options),
         )
@@ -59,7 +60,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         When disabling remote mode, this also tells the AC to use its internal sensor.
         """
         self._remote_temp_mode = enabled
-        _LOGGER.info("Remote temperature mode set to: %s", enabled)
+        _LOGGER.info("[%s] Remote temperature mode set to: %s", self.config_entry.title, enabled)
 
         # When disabling remote mode, tell the AC to use internal sensor
         if not enabled:
@@ -93,7 +94,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
 
     async def _async_update_data(self) -> ParsedDeviceState:
         """Update data via library."""
-        _LOGGER.debug("Coordinator fetching device status")
+        _LOGGER.debug("[%s] Coordinator fetching device status", self.config_entry.title)
 
         # Only process remote temperature if experimental features are enabled
         if self.experimental_features_enabled:
@@ -101,10 +102,11 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             if not self._startup_mode_applied:
                 self._startup_mode_applied = True
                 if self._remote_temp_mode:
-                    _LOGGER.info("Restoring remote temperature mode from persisted state")
+                    _LOGGER.info("[%s] Restoring remote temperature mode from persisted state",
+                                 self.config_entry.title)
                     await self._send_remote_temperature()
                 else:
-                    _LOGGER.debug("Starting with internal temperature mode")
+                    _LOGGER.debug("[%s] Starting with internal temperature mode", self.config_entry.title)
             elif self._remote_temp_mode:
                 # Regular update - send remote temperature if enabled
                 await self._send_remote_temperature()
@@ -131,8 +133,9 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
 
         if not external_entity_id:
             _LOGGER.warning(
-                "Remote temperature mode enabled but no external entity configured, "
-                "falling back to internal sensor"
+                "[%s] Remote temperature mode enabled but no external entity configured, "
+                "falling back to internal sensor",
+                self.config_entry.title,
             )
             await self.set_remote_temp_mode(False)
             return
@@ -141,8 +144,9 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
 
         if state is None:
             _LOGGER.warning(
-                "External temperature entity %s not found, "
+                "[%s External temperature entity %s not found, "
                 "temporarily using internal sensor (will retry)",
+                self.config_entry.title,
                 external_entity_id,
             )
             # Tell AC to use internal sensor temporarily, but don't disable remote mode
@@ -152,8 +156,9 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
 
         if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             _LOGGER.warning(
-                "External temperature entity %s is %s, "
+                "[%s] External temperature entity %s is %s, "
                 "temporarily using internal sensor (will retry)",
+                self.config_entry.title,
                 external_entity_id,
                 state.state,
             )
@@ -165,7 +170,8 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         try:
             temperature = float(state.state)
             _LOGGER.debug(
-                "Sending remote temperature %.1f from %s to AC",
+                "[%s] Sending remote temperature %.1f from %s to AC",
+                self.config_entry.title,
                 temperature,
                 external_entity_id,
             )
@@ -174,8 +180,9 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             )
         except (ValueError, TypeError) as e:
             _LOGGER.error(
-                "Invalid temperature value '%s' from %s: %s, "
+                "[%s] Invalid temperature value '%s' from %s: %s, "
                 "temporarily using internal sensor (will retry)",
+                self.config_entry.title,
                 state.state,
                 external_entity_id,
                 e,
