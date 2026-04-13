@@ -111,7 +111,9 @@ The integration will automatically discover your device and create the appropria
 
 - Home Assistant 2025.1 or later (requires Python 3.12+)
 - [pymitsubishi](https://pypi.org/project/pymitsubishi/) library (automatically installed)
-- Mitsubishi air conditioner with MAC-577IF-2E WiFi adapter
+- Mitsubishi air conditioner with MAC-577IF-2E WiFi adapter.
+  MAC-587 has been reported working as well.
+  ~~MAC-597~~ does not seem to work.
 
 ## Troubleshooting
 
