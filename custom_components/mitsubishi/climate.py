@@ -107,7 +107,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 16.0
-    _attr_max_temp = 32.0
+    _attr_max_temp = 31.0
     _attr_hvac_modes = [
         HVACMode.OFF,
         *MODE_HA_TO_MITSUBISHI.keys(),
