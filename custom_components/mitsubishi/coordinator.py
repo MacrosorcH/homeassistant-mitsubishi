@@ -102,11 +102,15 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             if not self._startup_mode_applied:
                 self._startup_mode_applied = True
                 if self._remote_temp_mode:
-                    _LOGGER.info("[%s] Restoring remote temperature mode from persisted state",
-                                 self.config_entry.title)
+                    _LOGGER.info(
+                        "[%s] Restoring remote temperature mode from persisted state",
+                        self.config_entry.title,
+                    )
                     await self._send_remote_temperature()
                 else:
-                    _LOGGER.debug("[%s] Starting with internal temperature mode", self.config_entry.title)
+                    _LOGGER.debug(
+                        "[%s] Starting with internal temperature mode", self.config_entry.title
+                    )
             elif self._remote_temp_mode:
                 # Regular update - send remote temperature if enabled
                 await self._send_remote_temperature()

@@ -121,9 +121,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return True
 
     except Exception as ex:
-        _LOGGER.exception("[%s] Failed to set up Mitsubishi Air Conditioner: %s",
-                          entry.title,
-                          ex)
+        _LOGGER.exception("[%s] Failed to set up Mitsubishi Air Conditioner: %s", entry.title, ex)
         raise ConfigEntryNotReady from ex
 
 
@@ -141,8 +139,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # This prevents the AC from being stuck with stale remote temperature data
         if coordinator.remote_temp_mode:
             try:
-                _LOGGER.info("[%s] Switching AC to internal temperature sensor during unload",
-                             entry.title)
+                _LOGGER.info(
+                    "[%s] Switching AC to internal temperature sensor during unload", entry.title
+                )
                 await hass.async_add_executor_job(
                     coordinator.controller.set_current_temperature, None
                 )
