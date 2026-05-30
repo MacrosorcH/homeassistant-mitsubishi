@@ -41,9 +41,20 @@ async def async_setup_entry(
         MitsubishiSensor(
             coordinator,
             config_entry,
-            "Inside Temperature 1",
+            "Inside Temperature 1 fine",
             "inside_temperature_1_fine",
             lambda d: float(d.sensors.inside_temperature_1_fine),
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Inside Temperature 1 coarse",
+            "inside_temperature_1_coarse",
+            lambda d: float(d.sensors.inside_temperature_1_coarse),
             SensorDeviceClass.TEMPERATURE,
             UnitOfTemperature.CELSIUS,
         )
