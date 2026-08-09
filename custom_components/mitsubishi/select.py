@@ -19,7 +19,7 @@ from .const import (
     TEMP_SOURCE_REMOTE,
 )
 from .coordinator import MitsubishiDataUpdateCoordinator
-from .entity import MitsubishiEntity
+from .entity import _NO_OPTIMISTIC, MitsubishiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,6 +59,8 @@ class MitsubishiPowerSavingSelect(MitsubishiEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         """Return the current power saving mode."""
+        if (v := self._optimistic_value("current_option")) is not _NO_OPTIMISTIC:
+            return v
         try:
             return "Enabled" if self.coordinator.data.general.is_power_saving else "Disabled"
         except AttributeError:
@@ -67,6 +69,7 @@ class MitsubishiPowerSavingSelect(MitsubishiEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Set the power saving mode."""
         enabled = option == "Enabled"
+        self._set_optimistic(current_option=option)
         await self._execute_command_with_refresh(
             f"set power saving mode to {option}",
             self.coordinator.controller.set_power_saving,

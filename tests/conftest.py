@@ -180,6 +180,7 @@ def create_entity_with_setup():
 
         if hass:
             entity.hass = hass
+            entity.entity_id = f"{entity_class.__module__.rsplit('.', 1)[-1]}.test"
 
         return entity
 

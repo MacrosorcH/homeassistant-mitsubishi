@@ -60,6 +60,7 @@ async def test_power_saving_select_async_select_option_enabled(
     """Test power saving select option selection to enabled."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
+    select.entity_id = "select.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -80,6 +81,7 @@ async def test_power_saving_select_async_select_option_disabled(
     """Test power saving select option selection to disabled."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
+    select.entity_id = "select.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -187,6 +189,7 @@ async def test_temperature_source_select_switch_to_internal(
     mock_coordinator.set_remote_temp_mode = AsyncMock()
     select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry_experimental)
     select.hass = hass
+    select.entity_id = "select.test"
     select.async_write_ha_state = MagicMock()
 
     await select.async_select_option("Internal")
@@ -204,6 +207,7 @@ async def test_temperature_source_select_switch_to_remote_no_entity(
     mock_coordinator.set_remote_temp_mode = AsyncMock()
     select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry)
     select.hass = hass
+    select.entity_id = "select.test"
     select.async_write_ha_state = MagicMock()
 
     await select.async_select_option("Remote")
@@ -219,6 +223,7 @@ async def test_temperature_source_select_extra_state_attributes_no_entity(
     """Test temperature source select extra state attributes without external entity."""
     select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry)
     select.hass = hass
+    select.entity_id = "select.test"
 
     attributes = select.extra_state_attributes
     assert attributes == {"source": "Mitsubishi AC"}

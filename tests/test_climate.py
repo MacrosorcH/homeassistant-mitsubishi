@@ -269,6 +269,7 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
     """Test setting HVAC mode to heat from off."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
     mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.OFF
 
     with (
@@ -289,6 +290,7 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
     """Test setting HVAC mode to heat from on."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
     mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
     mock_coordinator.data.general.drive_mode = pymitsubishi.DriveMode.COOLER
 
@@ -312,6 +314,7 @@ async def test_async_set_fan_mode(hass, mock_coordinator, mock_config_entry):
     mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
     mock_coordinator.data.general.drive_mode = pymitsubishi.DriveMode.COOLER
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -331,6 +334,7 @@ async def test_async_turn_on(hass, mock_coordinator, mock_config_entry):
     """Test turning on the climate entity."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -350,6 +354,7 @@ async def test_async_turn_off(hass, mock_coordinator, mock_config_entry):
     """Test turning off the climate entity."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -389,6 +394,7 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
     """Test setting swing mode to vertical."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -409,6 +415,7 @@ async def test_async_set_horizontal_swing_mode(hass, mock_coordinator, mock_conf
     """Test setting swing mode to horizontal."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -430,6 +437,7 @@ async def test_async_set_hvac_mode_power_command_fails(hass, mock_coordinator, m
     """Test setting HVAC mode when power command fails."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
+    climate.entity_id = "climate.test"
     mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.OFF
 
     with patch.object(climate, "_execute_command_with_refresh", new=AsyncMock()) as mock_execute:
@@ -451,6 +459,7 @@ async def test_temperature_command_validation_failure(hass, mock_coordinator, mo
     """Test temperature command when validation fails (device rejects temperature)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
+    climate.entity_id = "climate.test"
 
     with (
         patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
@@ -483,6 +492,7 @@ async def test_command_execution_failure(hass, mock_coordinator, mock_config_ent
     """Test command execution when the controller command fails."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
+    climate.entity_id = "climate.test"
 
     with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
         # Mock the command to return False (failure)
@@ -501,6 +511,7 @@ async def test_command_execution_exception(hass, mock_coordinator, mock_config_e
     """Test command execution when an exception occurs."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
+    climate.entity_id = "climate.test"
 
     with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
         # Mock the command to raise an exception
@@ -519,6 +530,7 @@ async def test_temperature_command_validation_success(hass, mock_coordinator, mo
     """Test temperature command when validation succeeds (temperature matches expected)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
+    climate.entity_id = "climate.test"
 
     # Mock coordinator data to show expected temperature (validation success)
     mock_coordinator.data = {"target_temp": 25.0}  # Device accepted the temperature
@@ -541,3 +553,50 @@ async def test_temperature_command_validation_success(hass, mock_coordinator, mo
 
         mock_sleep.assert_called_once_with(0.1)
         mock_refresh.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_optimistic_kept_until_device_confirms(
+    hass, mock_coordinator, mock_config_entry, create_entity_with_setup
+):
+    """An optimistic value survives refreshes until the device reports it."""
+    climate = create_entity_with_setup(
+        MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
+    )
+
+    climate._set_optimistic(target_temperature=22.0)
+    assert climate.target_temperature == 22.0
+
+    # Device has not applied the change yet -> optimistic value is retained.
+    mock_coordinator.data.general.temperature = 21.5
+    climate._handle_coordinator_update()
+    assert climate.target_temperature == 22.0
+    assert "target_temperature" in climate._optimistic
+
+    # Device now reports the requested value -> optimistic value is dropped.
+    mock_coordinator.data.general.temperature = 22.0
+    climate._handle_coordinator_update()
+    assert climate.target_temperature == 22.0
+    assert "target_temperature" not in climate._optimistic
+
+
+@pytest.mark.asyncio
+async def test_optimistic_gives_up_after_max_refreshes(
+    hass, mock_coordinator, mock_config_entry, create_entity_with_setup
+):
+    """A never-confirmed optimistic value is abandoned after the bound."""
+    from custom_components.mitsubishi.entity import OPTIMISTIC_MAX_REFRESHES
+
+    climate = create_entity_with_setup(
+        MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
+    )
+
+    climate._set_optimistic(target_temperature=22.0)
+    mock_coordinator.data.general.temperature = 21.5
+
+    for _ in range(OPTIMISTIC_MAX_REFRESHES):
+        assert climate.target_temperature == 22.0
+        climate._handle_coordinator_update()
+
+    assert "target_temperature" not in climate._optimistic
+    assert climate.target_temperature == 21.5
