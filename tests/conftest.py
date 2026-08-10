@@ -95,6 +95,31 @@ def mock_config_entry():
 
 
 @pytest.fixture
+def mock_config_entry_optimistic():
+    """Create a mock config entry with optimistic UI updates enabled."""
+    from homeassistant.const import CONF_HOST
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.mitsubishi.const import CONF_OPTIMISTIC_UPDATES, DOMAIN
+
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title="Test Mitsubishi AC",
+        unique_id="00:11:22:33:44:55",
+        data={
+            CONF_HOST: "192.168.1.100",
+            "encryption_key": "unregistered",
+            "admin_username": "admin",
+            "admin_password": "password",
+            "scan_interval": 30,
+            "enable_capability_detection": True,
+        },
+        options={CONF_OPTIMISTIC_UPDATES: True},
+        entry_id="test_entry_id",
+    )
+
+
+@pytest.fixture
 def mock_mitsubishi_controller():
     """Return a mock MitsubishiController instance."""
     from unittest.mock import MagicMock

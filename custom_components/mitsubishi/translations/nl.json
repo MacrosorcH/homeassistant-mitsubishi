@@ -10,9 +10,11 @@
           "admin_username": "Admin Username (standaard: admin)",
           "admin_password": "Admin Password (standaard: me1debug@0567)",
           "scan_interval": "Update Interval (seconden, 10-300)",
+          "optimistic_updates": "Optimistische updates",
           "experimental_features": "Activeer experimental features"
         },
         "data_description": {
+          "optimistic_updates": "Toon een gevraagde wijziging onmiddellijk in de UI en behoud deze tot het toestel ze bevestigt, in plaats van te wachten op de volgende verversing. Het toestel is 'eventually consistent', dus wanneer dit actief is kan de UI kort een waarde tonen die het toestel nog niet gerapporteerd heeft.",
           "experimental_features": "Activeer experimental features zoals externe temperatuur sensor support. Deze features kunnen in de toekomst veranderen of verdwijnen in toekomstige versies."
         }
       },
@@ -47,9 +49,11 @@
           "admin_password": "Admin Password (standaard: me1debug@0567)",
           "scan_interval": "Update Interval (seconden, 10-300)",
           "enable_capability_detection": "Activeer capability detection",
+          "optimistic_updates": "Optimistische updates",
           "experimental_features": "Activeer experimentele features"
         },
         "data_description": {
+          "optimistic_updates": "Toon een gevraagde wijziging onmiddellijk in de UI en behoud deze tot het toestel ze bevestigt, in plaats van te wachten op de volgende verversing. Het toestel is 'eventually consistent', dus wanneer dit actief is kan de UI kort een waarde tonen die het toestel nog niet gerapporteerd heeft.",
           "experimental_features": "Activeer experimental features zoals externe temperatuur sensor support. Deze features kunnen in de toekomst veranderen of verdwijnen in toekomstige versies."
         }
       },

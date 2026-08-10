@@ -10,9 +10,11 @@
           "admin_username": "Admin Username (default: admin)",
           "admin_password": "Admin Password (default: me1debug@0567)",
           "scan_interval": "Update Interval (seconds, 10-300)",
+          "optimistic_updates": "Optimistic updates",
           "experimental_features": "Enable experimental features"
         },
         "data_description": {
+          "optimistic_updates": "Show a requested change in the UI immediately and hold it until the device confirms it, instead of waiting for the next refresh. The device is eventually consistent, so while enabled the UI may briefly show a value the device has not yet reported.",
           "experimental_features": "Enable experimental features like remote temperature sensor support. These features may change or be removed in future versions."
         }
       },
@@ -47,9 +49,11 @@
           "admin_password": "Admin Password (default: me1debug@0567)",
           "scan_interval": "Update Interval (seconds, 10-300)",
           "enable_capability_detection": "Enable capability detection",
+          "optimistic_updates": "Optimistic updates",
           "experimental_features": "Enable experimental features"
         },
         "data_description": {
+          "optimistic_updates": "Show a requested change in the UI immediately and hold it until the device confirms it, instead of waiting for the next refresh. The device is eventually consistent, so while enabled the UI may briefly show a value the device has not yet reported.",
           "experimental_features": "Enable experimental features like remote temperature sensor support. These features may change or be removed in future versions."
         }
       },

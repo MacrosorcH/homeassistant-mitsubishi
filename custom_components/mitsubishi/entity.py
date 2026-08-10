@@ -11,7 +11,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES, DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,8 +78,15 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
         """Return if entity is available."""
         return self.coordinator.last_update_success and self.coordinator.data is not None
 
+    @property
+    def _optimistic_enabled(self) -> bool:
+        """Whether optimistic UI updates are enabled for this config entry."""
+        return self._config_entry.options.get(CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES)
+
     def _set_optimistic(self, **values: Any) -> None:
         """Show requested values immediately, until the device confirms them."""
+        if not self._optimistic_enabled:
+            return
         self._optimistic.update(values)
         for key in values:
             self._optimistic_age[key] = 0

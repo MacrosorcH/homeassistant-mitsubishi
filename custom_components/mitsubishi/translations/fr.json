@@ -10,9 +10,11 @@
           "admin_username": "Nom d'utilisateur administrateur (par défaut : admin)",
           "admin_password": "Mot de passe administrateur (par défaut : me1debug@0567)",
           "scan_interval": "Intervalle de mise à jour (secondes, 10-300)",
+          "optimistic_updates": "Mises à jour optimistes",
           "experimental_features": "Activer les fonctionnalités expérimentales"
         },
         "data_description": {
+          "optimistic_updates": "Affiche immédiatement le changement demandé dans l'interface et le conserve jusqu'à ce que l'appareil le confirme, au lieu d'attendre la prochaine actualisation. L'appareil est à cohérence à terme, donc lorsque cette option est activée, l'interface peut brièvement afficher une valeur que l'appareil n'a pas encore signalée.",
           "experimental_features": "Active les fonctionnalités expérimentales comme la prise en charge d'un capteur de température externe. Ces fonctionnalités peuvent évoluer ou être retirées dans de futures versions."
         }
       },
@@ -47,9 +49,11 @@
           "admin_password": "Mot de passe administrateur (par défaut : me1debug@0567)",
           "scan_interval": "Intervalle de mise à jour (secondes, 10-300)",
           "enable_capability_detection": "Activer la détection des capacités",
+          "optimistic_updates": "Mises à jour optimistes",
           "experimental_features": "Activer les fonctionnalités expérimentales"
         },
         "data_description": {
+          "optimistic_updates": "Affiche immédiatement le changement demandé dans l'interface et le conserve jusqu'à ce que l'appareil le confirme, au lieu d'attendre la prochaine actualisation. L'appareil est à cohérence à terme, donc lorsque cette option est activée, l'interface peut brièvement afficher une valeur que l'appareil n'a pas encore signalée.",
           "experimental_features": "Active les fonctionnalités expérimentales comme la prise en charge d'un capteur de température externe. Ces fonctionnalités peuvent évoluer ou être retirées dans de futures versions."
         }
       },

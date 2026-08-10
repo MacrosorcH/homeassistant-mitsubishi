@@ -14,6 +14,11 @@ CONF_ADMIN_PASSWORD = "admin_password"
 DEFAULT_ADMIN_PASSWORD = "me1debug@0567"
 CONF_SCAN_INTERVAL = "scan_interval"
 
+# Optimistic UI updates: show a requested value immediately and hold it until
+# the device confirms it, instead of waiting for the next refresh.
+CONF_OPTIMISTIC_UPDATES = "optimistic_updates"
+DEFAULT_OPTIMISTIC_UPDATES = False
+
 # Experimental Features
 CONF_EXPERIMENTAL_FEATURES = "experimental_features"
 

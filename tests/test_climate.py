@@ -557,11 +557,11 @@ async def test_temperature_command_validation_success(hass, mock_coordinator, mo
 
 @pytest.mark.asyncio
 async def test_optimistic_kept_until_device_confirms(
-    hass, mock_coordinator, mock_config_entry, create_entity_with_setup
+    hass, mock_coordinator, mock_config_entry_optimistic, create_entity_with_setup
 ):
     """An optimistic value survives refreshes until the device reports it."""
     climate = create_entity_with_setup(
-        MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
+        MitsubishiClimate, mock_coordinator, mock_config_entry_optimistic, hass=hass
     )
 
     climate._set_optimistic(target_temperature=22.0)
@@ -582,13 +582,13 @@ async def test_optimistic_kept_until_device_confirms(
 
 @pytest.mark.asyncio
 async def test_optimistic_gives_up_after_max_refreshes(
-    hass, mock_coordinator, mock_config_entry, create_entity_with_setup
+    hass, mock_coordinator, mock_config_entry_optimistic, create_entity_with_setup
 ):
     """A never-confirmed optimistic value is abandoned after the bound."""
     from custom_components.mitsubishi.entity import OPTIMISTIC_MAX_REFRESHES
 
     climate = create_entity_with_setup(
-        MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
+        MitsubishiClimate, mock_coordinator, mock_config_entry_optimistic, hass=hass
     )
 
     climate._set_optimistic(target_temperature=22.0)
@@ -599,4 +599,20 @@ async def test_optimistic_gives_up_after_max_refreshes(
         climate._handle_coordinator_update()
 
     assert "target_temperature" not in climate._optimistic
+    assert climate.target_temperature == 21.5
+
+
+@pytest.mark.asyncio
+async def test_optimistic_disabled_is_noop(
+    hass, mock_coordinator, mock_config_entry, create_entity_with_setup
+):
+    """With optimistic updates off (the default), the UI shows the device value only."""
+    climate = create_entity_with_setup(
+        MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
+    )
+
+    mock_coordinator.data.general.temperature = 21.5
+    climate._set_optimistic(target_temperature=22.0)
+
+    assert climate._optimistic == {}
     assert climate.target_temperature == 21.5

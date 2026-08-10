@@ -374,7 +374,7 @@ class TestOptionsFlow:
 
         assert result["type"] == FlowResultType.CREATE_ENTRY
         # Options are returned by async_create_entry so HA can save them to config_entry.options
-        assert result["data"] == {"experimental_features": False}
+        assert result["data"] == {"experimental_features": False, "optimistic_updates": False}
         # Connection data should be saved via async_update_entry
         expected_connection_data = {
             CONF_HOST: "192.168.1.101",
@@ -428,6 +428,7 @@ class TestOptionsFlow:
         # Options are returned by async_create_entry so HA can save them to config_entry.options
         expected_options = {
             "experimental_features": True,
+            "optimistic_updates": False,
             "external_temperature_entity": "sensor.room_temp",
         }
         assert result2["data"] == expected_options
