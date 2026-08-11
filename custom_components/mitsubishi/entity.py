@@ -4,15 +4,26 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES, DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+# The AC is eventually consistent: a command can take longer than one refresh
+# to show up in its reported state. Keep an optimistic value until the device
+# confirms it, but give up after this many refreshes so a command that silently
+# never applies cannot pin the UI to a wrong value forever.
+OPTIMISTIC_MAX_REFRESHES = 3
+
+# Distinguishes "no optimistic override" from a legitimate override value of None.
+_NO_OPTIMISTIC = object()
 
 
 class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
@@ -30,6 +41,15 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._key = key
+        # Values shown immediately after a command, before the device confirms
+        # them via a coordinator refresh. Keyed by property name (getattr(self,
+        # key) must return the device-derived value for that property).
+        self._optimistic: dict[str, Any] = {}
+        # Refreshes seen for each optimistic key while still unconfirmed.
+        self._optimistic_age: dict[str, int] = {}
+        # Set while reconciling so the getters return the device value, not the
+        # optimistic one, letting us compare the two.
+        self._bypass_optimistic = False
 
         if coordinator.data:
             device_mac = coordinator.data.mac
@@ -57,6 +77,54 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
     def available(self) -> bool:
         """Return if entity is available."""
         return self.coordinator.last_update_success and self.coordinator.data is not None
+
+    @property
+    def _optimistic_enabled(self) -> bool:
+        """Whether optimistic UI updates are enabled for this config entry."""
+        return self._config_entry.options.get(CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES)
+
+    def _set_optimistic(self, **values: Any) -> None:
+        """Show requested values immediately, until the device confirms them."""
+        if not self._optimistic_enabled:
+            return
+        self._optimistic.update(values)
+        for key in values:
+            self._optimistic_age[key] = 0
+        self.async_write_ha_state()
+
+    def _optimistic_value(self, key: str) -> Any:
+        """Return the optimistic override for a property, or a sentinel if none.
+
+        Getters call this so a pending value takes precedence over stale device
+        data, except while reconciling (so we can read the device value itself).
+        """
+        if not self._bypass_optimistic and key in self._optimistic:
+            return self._optimistic[key]
+        return _NO_OPTIMISTIC
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        # Drop optimistic values the device now confirms; keep the rest so a
+        # slow-to-apply change doesn't briefly snap back to its old value.
+        if self._optimistic:
+            self._bypass_optimistic = True
+            try:
+                for key in list(self._optimistic):
+                    if getattr(self, key) == self._optimistic[key]:
+                        self._clear_optimistic(key)
+                    else:
+                        self._optimistic_age[key] += 1
+                        if self._optimistic_age[key] >= OPTIMISTIC_MAX_REFRESHES:
+                            self._clear_optimistic(key)
+            finally:
+                self._bypass_optimistic = False
+        self.async_write_ha_state()
+
+    def _clear_optimistic(self, key: str) -> None:
+        """Forget one optimistic override."""
+        self._optimistic.pop(key, None)
+        self._optimistic_age.pop(key, None)
 
     async def _execute_command_with_refresh(
         self, command_name: str, command_func, *args, **kwargs
@@ -107,8 +175,17 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
                 return True
             else:
                 _LOGGER.warning(f"[{self._config_entry.title}] Failed to execute {command_name}")
+                self._revert_optimistic()
                 return False
 
         except Exception as e:
             _LOGGER.error(f"[{self._config_entry.title}] Error executing {command_name}: {e}")
+            self._revert_optimistic()
             return False
+
+    def _revert_optimistic(self) -> None:
+        """Drop optimistic values after a failed command so the UI snaps back."""
+        if self._optimistic:
+            self._optimistic.clear()
+            self._optimistic_age.clear()
+            self.async_write_ha_state()

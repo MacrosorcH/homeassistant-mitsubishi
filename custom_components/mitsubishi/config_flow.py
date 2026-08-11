@@ -20,11 +20,13 @@ from .const import (
     CONF_ENCRYPTION_KEY,
     CONF_EXPERIMENTAL_FEATURES,
     CONF_EXTERNAL_TEMP_ENTITY,
+    CONF_OPTIMISTIC_UPDATES,
     CONF_REMOTE_TEMP_MODE,
     CONF_SCAN_INTERVAL,
     DEFAULT_ADMIN_PASSWORD,
     DEFAULT_ADMIN_USERNAME,
     DEFAULT_ENCRYPTION_KEY,
+    DEFAULT_OPTIMISTIC_UPDATES,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
@@ -64,6 +66,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
             vol.Coerce(int), vol.Range(min=10, max=300)
         ),
+        vol.Optional(CONF_OPTIMISTIC_UPDATES, default=DEFAULT_OPTIMISTIC_UPDATES): bool,
         vol.Optional(CONF_EXPERIMENTAL_FEATURES, default=False): bool,
     }
 )
@@ -114,6 +117,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         super().__init__()
         self._connection_data: dict[str, Any] = {}
         self._experimental_features: bool = False
+        self._optimistic_updates: bool = DEFAULT_OPTIMISTIC_UPDATES
         self._device_info: dict[str, Any] = {}
 
     @staticmethod
@@ -133,6 +137,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 # Extract experimental features flag
                 self._experimental_features = user_input.pop(CONF_EXPERIMENTAL_FEATURES, False)
+                self._optimistic_updates = user_input.pop(
+                    CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES
+                )
 
                 _LOGGER.debug("Calling validate_input")
                 info = await validate_input(self.hass, user_input)
@@ -185,6 +192,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Build options
         options: dict[str, Any] = {
             CONF_EXPERIMENTAL_FEATURES: self._experimental_features,
+            CONF_OPTIMISTIC_UPDATES: self._optimistic_updates,
         }
         if self._experimental_features and external_temp_entity:
             options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
@@ -205,6 +213,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self._config_entry = config_entry
         self._connection_data: dict[str, Any] = {}
         self._experimental_features: bool = False
+        self._optimistic_updates: bool = DEFAULT_OPTIMISTIC_UPDATES
 
     @property
     def config_entry(self) -> config_entries.ConfigEntry:
@@ -220,6 +229,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             try:
                 # Extract experimental features flag
                 self._experimental_features = user_input.pop(CONF_EXPERIMENTAL_FEATURES, False)
+                self._optimistic_updates = user_input.pop(
+                    CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES
+                )
 
                 # Validate the connection configuration
                 _LOGGER.debug("Validating new configuration")
@@ -258,6 +270,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
         current_experimental = self.config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False)
+        current_optimistic = self.config_entry.options.get(
+            CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES
+        )
 
         options_schema = vol.Schema(
             {
@@ -268,6 +283,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
                     vol.Coerce(int), vol.Range(min=10, max=300)
                 ),
+                vol.Optional(CONF_OPTIMISTIC_UPDATES, default=current_optimistic): bool,
                 vol.Optional(CONF_EXPERIMENTAL_FEATURES, default=current_experimental): bool,
             }
         )
@@ -292,6 +308,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # Build new options FIRST (before any reload)
         new_options: dict[str, Any] = {
             CONF_EXPERIMENTAL_FEATURES: self._experimental_features,
+            CONF_OPTIMISTIC_UPDATES: self._optimistic_updates,
         }
         if self._experimental_features:
             # Only preserve experimental settings when experimental features are enabled

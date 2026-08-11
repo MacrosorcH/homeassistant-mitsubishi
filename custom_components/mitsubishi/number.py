@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
-from .entity import MitsubishiEntity
+from .entity import _NO_OPTIMISTIC, MitsubishiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +54,8 @@ class MitsubishiDehumidifierNumber(MitsubishiEntity, NumberEntity):
     @property
     def native_value(self) -> float | None:
         """Return the current dehumidifier level."""
+        if (v := self._optimistic_value("native_value")) is not _NO_OPTIMISTIC:
+            return v
         try:
             return self.coordinator.data.general.dehum_setting
         except AttributeError:
@@ -61,6 +63,7 @@ class MitsubishiDehumidifierNumber(MitsubishiEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the dehumidifier level."""
+        self._set_optimistic(native_value=int(value))
         await self._execute_command_with_refresh(
             f"set dehumidifier level to {value}%",
             self.coordinator.controller.set_dehumidifier,

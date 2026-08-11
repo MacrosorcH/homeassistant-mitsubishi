@@ -17,7 +17,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from pymitsubishi import (
     AutoMode,
@@ -30,7 +30,7 @@ from pymitsubishi import (
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
-from .entity import MitsubishiEntity
+from .entity import _NO_OPTIMISTIC, MitsubishiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,6 +144,8 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     @property
     def target_temperature(self) -> float | None:
+        if (v := self._optimistic_value("target_temperature")) is not _NO_OPTIMISTIC:
+            return v
         try:
             return self.coordinator.data.general.temperature
         except AttributeError:
@@ -155,6 +157,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         if temperature is None:
             return
 
+        self._set_optimistic(target_temperature=temperature)
         await self._execute_command_with_refresh(
             f"set temperature to {temperature}°C",
             self.coordinator.controller.set_temperature,
@@ -167,6 +170,8 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         Return hvac operation i.e. heat, cool mode.
         Note that HA sees "off" as a mode; Mitsubishi has a separate PowerOnOff field, so join these
         """
+        if (v := self._optimistic_value("hvac_mode")) is not _NO_OPTIMISTIC:
+            return v
         try:
             if self.coordinator.data.general.power_on_off == PowerOnOff.OFF:
                 return HVACMode.OFF
@@ -180,12 +185,14 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         )
 
     async def async_turn_off(self) -> None:
+        self._set_optimistic(hvac_mode=HVACMode.OFF)
         await self._execute_command_with_refresh(
             "turn off device", self.coordinator.controller.set_power, False
         )
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
+        self._set_optimistic(hvac_mode=hvac_mode)
         if hvac_mode == HVACMode.OFF:
             await self._execute_command_with_refresh(
                 f"set HVAC mode to {hvac_mode}", self.coordinator.controller.set_power, False
@@ -232,12 +239,15 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     @property
     def fan_mode(self) -> str | None:
+        if (v := self._optimistic_value("fan_mode")) is not _NO_OPTIMISTIC:
+            return v
         try:
             return FAN_SPEED_MITSUBISHI_TO_HA[self.coordinator.data.general.wind_speed]
         except AttributeError:
             return None
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
+        self._set_optimistic(fan_mode=fan_mode)
         await self._execute_command_with_refresh(
             f"set fan mode to {fan_mode}",
             self.coordinator.controller.set_fan_speed,
@@ -246,12 +256,15 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     @property
     def swing_mode(self) -> str | None:
+        if (v := self._optimistic_value("swing_mode")) is not _NO_OPTIMISTIC:
+            return v
         try:
             return VSWING_MITSUBISHI_TO_HA[self.coordinator.data.general.vertical_wind_direction]
         except AttributeError:
             return None
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
+        self._set_optimistic(swing_mode=swing_mode)
         await self._execute_command_with_refresh(
             f"set swing mode to {swing_mode}",
             self.coordinator.controller.set_vertical_vane,
@@ -260,12 +273,15 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     @property
     def swing_horizontal_mode(self) -> str | None:
+        if (v := self._optimistic_value("swing_horizontal_mode")) is not _NO_OPTIMISTIC:
+            return v
         try:
             return HSWING_MITSUBISHI_TO_HA[self.coordinator.data.general.horizontal_wind_direction]
         except AttributeError:
             return None
 
     async def async_set_swing_horizontal_mode(self, swing_horizontal_mode: str) -> None:
+        self._set_optimistic(swing_horizontal_mode=swing_horizontal_mode)
         await self._execute_command_with_refresh(
             f"set horizontal swing mode to {swing_horizontal_mode}",
             self.coordinator.controller.set_horizontal_vane,
@@ -294,8 +310,3 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
             pass
 
         return attrs
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self.async_write_ha_state()

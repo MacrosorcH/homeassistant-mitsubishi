@@ -58,6 +58,7 @@ async def test_async_set_native_value_success(hass, mock_coordinator, mock_confi
     """Test setting dehumidifier level successfully."""
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
     number.hass = hass  # Set hass attribute
+    number.entity_id = "number.test"
 
     # Mock successful controller call and asyncio.sleep
     with (
@@ -77,6 +78,7 @@ async def test_async_set_native_value_failure(hass, mock_coordinator, mock_confi
     """Test setting dehumidifier level when controller returns failure."""
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
     number.hass = hass  # Set hass attribute
+    number.entity_id = "number.test"
 
     # Mock failed controller call
     with (
@@ -101,6 +103,7 @@ async def test_async_set_native_value_exception(hass, mock_coordinator, mock_con
     """Test setting dehumidifier level when an exception occurs."""
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
     number.hass = hass  # Set hass attribute
+    number.entity_id = "number.test"
 
     # Mock exception during controller call
     with (
@@ -133,6 +136,7 @@ async def test_async_set_native_value_float_conversion(hass, mock_coordinator, m
     """Test that float values are properly converted to integers for the controller."""
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
     number.hass = hass  # Set hass attribute
+    number.entity_id = "number.test"
 
     # Test that 85.7 gets converted to 85 (int)
     with (
